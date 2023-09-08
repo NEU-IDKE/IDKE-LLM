@@ -1,0 +1,2 @@
+tiktoken
+streamlit_option_menu
