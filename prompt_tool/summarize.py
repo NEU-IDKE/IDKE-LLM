@@ -7,10 +7,11 @@ def tool():
         "text": "需要进行总结的文本"
     }
     prompt = f"""
-    As a good article editor,
-    please summarize the text delimited by triple backticks naturally and concisely.
+    As a good text summarizer,
+    please summarize the following text delimited by ``` naturally,\
+    and the language of the summary needs to be the same as the language of the text.
 
-    You need summarize the text in the form of a declarative sentence.
+    You should summarize the text in the form of a declarative sentence.
 
     ```{{text}}```
     """
