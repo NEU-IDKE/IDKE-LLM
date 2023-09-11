@@ -9,7 +9,7 @@ def tool():
     }
     prompt = f"""
     As an experimental translator,
-    please translate the text delimited by triple backticks to {{language}}.
+    please translate the text delimited by triple backticks to {{language}} in formal.
     
     The translation you make needs to conform to the convention of target language, such as late adverbial, object preposition, passive voice, etc.
 
