@@ -341,7 +341,7 @@ def page4():
         st.toast(f"🎉 完成啦！")
         st.session_state["messages_t"] = []
         st.session_state["messages_length_t"] = 0
-    # test
+    # 此处重置参数，解决功能切换问题
     st.session_state["paramters"] = {}
     st.session_state["paramters_values"] = {}
     st.session_state["valid_inputs_received"] = False
