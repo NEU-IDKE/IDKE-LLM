@@ -268,6 +268,7 @@ def page4():
                 tools[line.split()[0]] = line.split()[1]
             choose_tool = st.selectbox('当前可用的功能包：', [tool for tool in tools.keys()],index = st.session_state.tool_index) 
         if choose_tool != "<未选择>":
+            # text
             module = importlib.import_module("prompt_tool." + tools[choose_tool][:-3])  # 去掉文件名后缀 '.py'
             title, description, paramters, prompt = module.tool()  # 调用函数
             st.divider()
