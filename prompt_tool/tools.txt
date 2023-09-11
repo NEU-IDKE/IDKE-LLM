@@ -1,1 +1,2 @@
-英文翻译 translate_English.py
+文本翻译 translate_English.py
+文本总结 summarize.py
