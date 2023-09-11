@@ -275,6 +275,8 @@ def page4():
             st.caption(description)
             st.write("参数需求")
             st.write(paramters)
+            st.write("test") # test
+            st.write(param for param in paramters) # test
             st.session_state.paramters = paramters
         else:
             st.session_state.paramters = {}
