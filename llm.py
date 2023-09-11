@@ -275,8 +275,6 @@ def page4():
             st.caption(description)
             st.write("参数需求")
             st.write(paramters)
-            st.session_state["messages_t"] = []
-            st.session_state["messages_length_t"] = 0
             st.session_state.paramters = paramters
         else:
             st.session_state.paramters = {}
