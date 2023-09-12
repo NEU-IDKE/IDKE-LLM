@@ -29,7 +29,6 @@ def page1():
          6.技术限制：模型仍然受到技术限制，可能会产生一些不符合实际情况的输出。请理解并谅解这一点。
             
        使用本网页即表示您同意并接受以上免责声明。如果您对免责声明有任何疑问或需要进一步的解释，请随时联系我们。
-       联系方式: drasick59596@163.com
         """
         st.text(note)
         
@@ -242,80 +241,89 @@ def page3():
 def page4():
     st.title("📦 Prompt Tools")   
     
+    tools = {'<未选择>':"none"}
+    # 打开文件
+    with open('prompt_tool/tools.txt', 'r',encoding='utf-8') as file:
+        # 逐行读取内容
+        for line in file:
+            tools[line.split()[0]] = line.split()[1]
+    tools_keys = [ key for key in tools.keys()]
+    
     st.session_state["messages_t"] = []
     st.session_state["messages_length_t"] = 0
         
     if "tool_index" not in st.session_state:
         st.session_state["tool_index"] = 0
+    
+    if "choose_folder_t" not in st.session_state:
+        st.session_state["choose_folder_t"] = tools_keys[st.session_state.tool_index]
         
     # 判断是否有可以提交的标记    
     if not "valid_inputs_received" in st.session_state:
         st.session_state["valid_inputs_received"] = False
     if not "paramters" in st.session_state:
         st.session_state["paramters"] = {}
-        
+
     if not "paramters_values" in st.session_state:
         st.session_state["paramters_values"] = {}
+        
+    for param in st.session_state.paramters:
+        if not f"paramters_{param}" in st.session_state:
+            st.session_state[f"paramters_{param}"] = st.session_state["paramters_values"][param]
+    
         
     my_bar.progress(st.session_state.messages_length_t / 4050,text = f"⚡Token Usage(current page): {st.session_state.messages_length_t}")    
         
     with st.expander('**选择功能包**'):
-        tools = {'<未选择>':"none"}
-        # 打开文件
-        with open('prompt_tool/tools.txt', 'r',encoding='utf-8') as file:
-            # 逐行读取内容
-            for line in file:
-                tools[line.split()[0]] = line.split()[1]
-            choose_tool = st.selectbox('当前可用的功能包：', [tool for tool in tools.keys()],index = st.session_state.tool_index) 
-        if choose_tool != "<未选择>":
-            module = importlib.import_module("prompt_tool." + tools[choose_tool][:-3])  # 去掉文件名后缀 '.py'
-            title, description, paramters, prompt = module.tool()  # 调用函数
-            st.divider()
-            st.subheader(title)
-            st.caption(description)
-            st.write("参数需求")
-            st.write(paramters)
-            st.session_state.paramters = paramters
-        else:
-            st.session_state.paramters = {}
-        st.session_state.tool_index = [tool for tool in tools.keys()].index(choose_tool)
+        choose_tool = st.selectbox('当前可用的功能包：', tools_keys, tools_keys.index(st.session_state.choose_folder_t), key="choose_folder_t") 
         
+    if choose_tool != "<未选择>":
+        module = importlib.import_module("prompt_tool." + tools[choose_tool][:-3])  # 去掉文件名后缀 '.py'
+        title, description, paramters, prompt = module.tool()  # 调用函数
+        st.divider()
+        st.subheader(title)
+        st.caption(description)
+        st.write("参数需求")
+        st.write(paramters)
+        st.session_state.paramters = paramters
+    else:
+        st.session_state.paramters = {}
+    st.session_state.tool_index = tools_keys.index(st.session_state.choose_folder_t)
+    
+    for param in st.session_state.paramters:
+            if not f"paramters_{param}" in st.session_state:
+                st.session_state[f"paramters_{param}"] = ""
+                
     with st.form(key="my_form"):
         paramters_values = {}
-        if st.session_state.paramters_values:
-            for param in st.session_state.paramters:
-                if "text" in param:
-                    paramters_values[param] = st.text_area(param, st.session_state.paramters_values[param], help = st.session_state.paramters[param], height = 200)
-                else:
-                    paramters_values[param] = st.text_input(param, st.session_state.paramters_values[param], help = st.session_state.paramters[param])
-        else:
-            for param in st.session_state.paramters:
-                if "text" in param:
-                    paramters_values[param] = st.text_area(param, help = st.session_state.paramters[param], height = 200)
-                else:
-                    paramters_values[param] = st.text_input(param, help = st.session_state.paramters[param])
-#         st.write(prompt)
+        for param in st.session_state.paramters:
+            if "text" in param:
+                paramters_values[param] = st.text_area(param, st.session_state[f"paramters_{param}"], help = st.session_state.paramters[param], height = 200, key = f"paramters_{param}")
+            else:
+                paramters_values[param] = st.text_input(param, st.session_state[f"paramters_{param}"], help = st.session_state.paramters[param], key = f"paramters_{param}")
+        
         if not st.session_state.paramters:
             submit_button = st.form_submit_button(label="提交", disabled = True)
         else:
             submit_button = st.form_submit_button(label="提交" )
             
     st.session_state.paramters_values = paramters_values
-    # 遍历判定所有参数是否初始化
-    for param in paramters_values:
-        if not paramters_values[param] and submit_button:
+
+    # 遍历判定所有参数是否初始化     
+    for param in st.session_state.paramters:
+        if not st.session_state[f"paramters_{param}"] and submit_button:
             st.toast(f"🚨 没有输入{param} !")
             st.session_state.valid_inputs_received = False
             st.stop()
     # 说明所有参数都已经完成赋值
     if len(paramters_values) != 0:
         st.session_state.valid_inputs_received = True  
+    
     if submit_button and st.session_state.valid_inputs_received:
         if not openai_api_key:
             st.toast("❄️ 请输入你的 OpenAI API key")
             st.stop()
         openai.api_key = openai_api_key
-#         st.write(prompt.format(**paramters_values))
         st.session_state.messages_t.append({"role": "user", "content": prompt.format(**paramters_values)})
         st.session_state.messages_length_t += len(encoding.encode(prompt))
         if st.session_state.messages_length_t > 4050:
@@ -341,27 +349,28 @@ def page4():
         st.toast(f"🎉 完成啦！")
         st.session_state["messages_t"] = []
         st.session_state["messages_length_t"] = 0
-    # 此处重置参数，解决功能切换问题，文本框清空
-    st.session_state["paramters"] = {}
-    st.session_state["paramters_values"] = {}
-    st.session_state["valid_inputs_received"] = False
- 
         
-        
+    
         
         
         
 def page5():
     st.title("🔧 Fine Tuning", help = "🔒当前仅有学习资料，其他功能敬请期待") 
+    
+    materials = ['<未选择>']
+    folder_path = 'fine_tuning'
+    folders = os.listdir(folder_path)
+    materials.extend(folders)
+        
     if "fine_index" not in st.session_state:
         st.session_state["fine_index"] = 0
         
+    if "choose_folder_f" not in st.session_state:
+        st.session_state["choose_folder_f"] = materials[st.session_state.fine_index]
+        
     with st.expander('**选择学习资料**'):
-        materials = ['<未选择>']
-        folder_path = 'fine_tuning'
-        folders = os.listdir(folder_path)
-        materials.extend(folders)
-        choose_folder = st.selectbox('当前整理的学习资料：', materials, index = st.session_state.fine_index)
+        
+        choose_folder = st.selectbox('当前整理的学习资料：', materials, materials.index(st.session_state.choose_folder_f), key="choose_folder_f")
         
     if choose_folder != '<未选择>':
         inner_folder = os.path.join(folder_path, choose_folder)
@@ -386,7 +395,7 @@ def page5():
                     if split_article != "":
                         st.write(split_article)
                         
-    st.session_state.fine_index = materials.index(choose_folder)
+    st.session_state.fine_index = materials.index(st.session_state.choose_folder_f)  
     
     
     
@@ -402,15 +411,20 @@ def page5():
 def page6():
     st.title("🎰 Reinforcement Learning", help = "🔒当前仅有学习资料，其他功能敬请期待") 
     
+    materials = ['<未选择>']
+    folder_path = 'reinforcement_learning'
+    folders = os.listdir(folder_path)
+    materials.extend(folders)
+    
     if "rein_index" not in st.session_state:
         st.session_state["rein_index"] = 0
         
+    if "choose_folder_r" not in st.session_state:
+        st.session_state["choose_folder_r"] = materials[st.session_state.rein_index]
+        
     with st.expander('**选择学习资料**'):
-        materials = ['<未选择>']
-        folder_path = 'reinforcement_learning'
-        folders = os.listdir(folder_path)
-        materials.extend(folders)
-        choose_folder = st.selectbox('当前整理的学习资料：', materials, index = st.session_state.rein_index)
+        
+        choose_folder = st.selectbox('当前整理的学习资料：', materials, materials.index(st.session_state.choose_folder_r), key="choose_folder_r")
         
     if choose_folder != '<未选择>':
         inner_folder = os.path.join(folder_path, choose_folder)
@@ -435,7 +449,7 @@ def page6():
                     if split_article != "":
                         st.write(split_article)
                         
-    st.session_state.rein_index = materials.index(choose_folder)
+    st.session_state.rein_index = materials.index(st.session_state.choose_folder_r)
     
     
         
@@ -471,6 +485,8 @@ with st.sidebar:
             st.session_state["messages_t"] = []
             st.session_state["messages_length_t"] = 0
             st.session_state["paramters_values"] = {}
+            for param in st.session_state.paramters:
+                st.session_state[f"paramters_{param}"] = ""
             
        
     choose_model = st.selectbox('💡Choose Model', ['gpt-3.5-turbo','text-davinci-003', 'llama2-chat','Chat-GLM'], help = "🔒敬请期待")
